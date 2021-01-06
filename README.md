@@ -1,1 +1,0 @@
-# Sparkify-ETL-Database
