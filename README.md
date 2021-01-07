@@ -29,6 +29,8 @@ The fact table contains keys for these table along with level of user, location 
 
 A STAR schema is implemented here as it is denormailzed and hence favourable for OLAP qureies. Raw data is present in the form of JSON files in song_data and log_data. The ETL pipeline loads data from these JSON files and fills the database tables.
 
+![alt text](https://github.com/VinithAngadi/Sparkify-ETL-Database/blob/main/Images/UML_diagram-3.png)
+
 
 
 
