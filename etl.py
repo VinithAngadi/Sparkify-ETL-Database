@@ -6,19 +6,33 @@ from sql_queries import *
 
 
 def process_song_file(cur, filepath):
+    """
+    This function extracts the song info into a dataframe and executes the
+    insert queries for song_table and artist_table.
+    INPUT:
+    * cur the cursor variable
+    * filepath the file path to the song file
+    """
     # open song file
     df = pd.read_json(filepath, lines = True)
 
     # insert song record
     song_data = df[['song_id','title','artist_id','year','duration']].values.tolist()[0]
     cur.execute(song_table_insert, song_data)
-    
+
     # insert artist record
     artist_data = df[['artist_id', 'artist_name', 'artist_location', 'artist_latitude', 'artist_longitude']].values.tolist()[0]
     cur.execute(artist_table_insert, artist_data)
 
 
 def process_log_file(cur, filepath):
+    """
+    This function extracts the log info into a dataframe and executes the
+    insert queries for user_table, time_table and songplay_table.
+    INPUT:
+    * cur the cursor variable
+    * filepath the file path to the log file
+    """
     # open log file
     df = pd.read_json(filepath, lines = True)
 
@@ -28,7 +42,7 @@ def process_log_file(cur, filepath):
     # convert timestamp column to datetime
     df['ts'] = pd.to_datetime(df['ts'], unit = 'ms')
     t = df['ts']
-    
+
     # insert time data records
     time_data = (df['ts'].values, t.dt.hour.values, t.dt.day.values, t.dt.week.values, t.dt.month.values, t.dt.year.values, t.dt.weekday_name.values)
     column_labels = ('timestamp', 'hour', 'day', 'week', 'month', 'year', 'weekday')
@@ -41,7 +55,7 @@ def process_log_file(cur, filepath):
         cur.execute(time_table_insert, list(row))
 
     # load user table
-    user_df = df[['userId','firstName','lastName','gender','level']].drop_duplicates()
+    user_df = df[['userId','firstName','lastName','gender','level']]
 
     # insert user records
     for i, row in user_df.iterrows():
@@ -49,11 +63,11 @@ def process_log_file(cur, filepath):
 
     # insert songplay records
     for index, row in df.iterrows():
-        
+
         # get songid and artistid from song and artist tables
         cur.execute(song_select, (row.song, row.artist, row.length))
         results = cur.fetchone()
-        
+
         if results:
             songid, artistid = results
         else:
@@ -65,6 +79,15 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    """
+    This function gets absolute file paths from specified directory,
+    and sends it to the specified function (process_song_file() and process_log_file())
+    INPUTS:
+    * cur - the curson variable
+    * conn - psycopg2 connection variable
+    * filepath - filepath to directory
+    * func - function name to be called
+    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
@@ -84,6 +107,11 @@ def process_data(cur, conn, filepath, func):
 
 
 def main():
+    """
+    This is the main driver function that establishes connection with sparkifydb,
+    initializes the cursor, and call process_data() to load data into tables.
+    Connection is closed after use.
+    """
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
 
